@@ -1,0 +1,43 @@
+version: '3.4'
+
+services:
+  auditelasticsearch:
+    image: ${DOCKER_REGISTRY-}auditelasticsearch
+    build:
+      context: .
+      dockerfile: AuditElasticSearch/Dockerfile
+    networks:
+      - esnetwork
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - esnetwork
+    environment:
+      - xpack.monitoring.enabled=true
+      - xpack.watcher.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.7.0
+    container_name: kibana
+    ports:
+        - "5601:5601"
+    networks:
+      - esnetwork
+    depends_on:
+      - elasticsearch
+
+volumes:
+    esdata:
+        driver: local
+networks:
+    esnetwork:
+        driver: bridge
